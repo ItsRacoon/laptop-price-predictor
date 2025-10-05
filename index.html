@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laptop Price Predictor - AI Powered</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+        
+        .input-field, select {
+            transition: all 0.2s ease;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .input-field:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+            cursor: pointer;
+        }
+        
+        select:hover {
+            border-color: #9ca3af;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+        
+        .result-card {
+            animation: fadeIn 0.4s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .metric-card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .tab-button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1.5px solid transparent;
+            font-size: 14px;
+        }
+        
+        .tab-button.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        
+        .tab-button:not(.active) {
+            background: white;
+            color: #6b7280;
+            border-color: #e5e7eb;
+        }
+        
+        .tab-button:not(.active):hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f3f4f6;
+        }
+        
+        label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+            display: block;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-blue {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .header-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="card mb-6 p-8 header-gradient">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold text-white mb-2">Laptop Price Predictor</h1>
+                <p class="text-white text-opacity-90 mb-6">AI-Powered Price Estimation using XGBoost Machine Learning</p>
+                <div class="flex justify-center gap-6">
+                    <div class="metric-card px-6 py-3 bg-white bg-opacity-20">
+                        <div class="text-xs text-white text-opacity-75 mb-1">Model Accuracy</div>
+                        <div class="text-2xl font-bold text-white" id="model-r2">--</div>
+                    </div>
+                    <div class="metric-card px-6 py-3 bg-white bg-opacity-20">
+                        <div class="text-xs text-white text-opacity-75 mb-1">Average Error</div>
+                        <div class="text-2xl font-bold text-white" id="model-mae">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="card p-8">
+            <!-- Tabs -->
+            <div class="flex gap-3 mb-8">
+                <button onclick="showTab('predict')" class="tab-button active" id="tab-predict">
+                    Single Prediction
+                </button>
+                <button onclick="showTab('batch')" class="tab-button" id="tab-batch">
+                    Batch Prediction
+                </button>
+            </div>
+
+            <!-- Single Prediction Tab -->
+            <div id="tab-content-predict">
+                <form id="prediction-form" class="space-y-8">
+                    <!-- Basic Specifications -->
+                    <div>
+                        <h2 class="section-title">Basic Specifications</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                            <div>
+                                <label for="brand">Brand</label>
+                                <select id="brand" required>
+                                    <option value="">Select brand</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="ram_memory">RAM Memory (GB)</label>
+                                <input type="number" id="ram_memory" class="input-field w-full" placeholder="e.g., 8" min="2" max="128" value="8" required>
+                            </div>
+                            
+                            <div>
+                                <label for="display_size">Display Size (inches)</label>
+                                <input type="number" step="0.1" id="display_size" class="input-field w-full" placeholder="e.g., 15.6" min="10" max="18" value="15.6" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Processor Configuration -->
+                    <div>
+                        <h2 class="section-title">Processor Configuration</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+                            <div>
+                                <label for="processor_brand">Processor Brand</label>
+                                <select id="processor_brand" required>
+                                    <option value="">Select brand</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="processor_tier">Processor Tier</label>
+                                <select id="processor_tier" required>
+                                    <option value="">Select tier</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="num_cores">Number of Cores</label>
+                                <input type="number" id="num_cores" class="input-field w-full" placeholder="e.g., 4" min="2" max="32" value="4" required>
+                            </div>
+                            
+                            <div>
+                                <label for="num_threads">Number of Threads</label>
+                                <input type="number" id="num_threads" class="input-field w-full" placeholder="e.g., 8" min="2" max="64" value="8" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Storage Configuration -->
+                    <div>
+                        <h2 class="section-title">Storage Configuration</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label for="primary_storage_type">Primary Storage Type</label>
+                                <select id="primary_storage_type" required>
+                                    <option value="">Select storage type</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="primary_storage_capacity">Primary Storage Capacity (GB)</label>
+                                <input type="number" id="primary_storage_capacity" class="input-field w-full" placeholder="e.g., 512" min="128" max="4096" value="512" required>
+                            </div>
+                            
+                            <div>
+                                <label for="secondary_storage_type">Secondary Storage Type (Optional)</label>
+                                <select id="secondary_storage_type">
+                                    <option value="">None</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="secondary_storage_capacity">Secondary Storage Capacity (GB)</label>
+                                <input type="number" id="secondary_storage_capacity" class="input-field w-full" placeholder="0" min="0" max="4096" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Graphics & Display -->
+                    <div>
+                        <h2 class="section-title">Graphics & Display</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                            <div>
+                                <label for="gpu_brand">GPU Brand</label>
+                                <select id="gpu_brand" required>
+                                    <option value="">Select GPU brand</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="gpu_type">GPU Type</label>
+                                <select id="gpu_type" required>
+                                    <option value="">Select GPU type</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="is_touch_screen">Touch Screen</label>
+                                <select id="is_touch_screen" required>
+                                    <option value="">Select option</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="resolution_width">Resolution Width (pixels)</label>
+                                <input type="number" id="resolution_width" class="input-field w-full" placeholder="e.g., 1920" min="1024" max="3840" value="1920" required>
+                            </div>
+                            
+                            <div>
+                                <label for="resolution_height">Resolution Height (pixels)</label>
+                                <input type="number" id="resolution_height" class="input-field w-full" placeholder="e.g., 1080" min="768" max="2160" value="1080" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Features -->
+                    <div>
+                        <h2 class="section-title">Additional Features</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label for="OS">Operating System</label>
+                                <select id="OS" required>
+                                    <option value="">Select operating system</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="year_of_warranty">Warranty Period (years)</label>
+                                <input type="number" id="year_of_warranty" class="input-field w-full" placeholder="e.g., 1" min="0" max="5" value="1" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-4">
+                        <button type="submit" class="btn-primary w-full py-4 text-base font-semibold flex items-center justify-center gap-2">
+                            <span id="btn-text">Predict Price</span>
+                            <span id="btn-loader" class="loading hidden"></span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Result Card -->
+                <div id="result-card" class="hidden mt-8 result-card">
+                    <div class="card p-8 border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-6">Prediction Results</h3>
+                        <div class="text-center mb-8">
+                            <div class="text-sm text-gray-600 mb-2">Estimated Price</div>
+                            <div class="text-5xl font-bold text-blue-600" id="predicted-price">₹0</div>
+                            <div class="text-sm text-gray-500 mt-2" id="price-range">Price range: ₹0 - ₹0</div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="text-center p-4 bg-white rounded-lg">
+                                <div class="text-xs text-gray-500 mb-1">Lower Bound</div>
+                                <div class="text-xl font-semibold text-gray-800" id="lower-bound">₹0</div>
+                            </div>
+                            <div class="text-center p-4 bg-white rounded-lg border-2 border-blue-200">
+                                <div class="text-xs text-gray-500 mb-1">Expected Price</div>
+                                <div class="text-xl font-semibold text-blue-600" id="expected-price">₹0</div>
+                            </div>
+                            <div class="text-center p-4 bg-white rounded-lg">
+                                <div class="text-xs text-gray-500 mb-1">Upper Bound</div>
+                                <div class="text-xl font-semibold text-gray-800" id="upper-bound">₹0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batch Prediction Tab -->
+            <div id="tab-content-batch" class="hidden">
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Batch Prediction</h3>
+                    <p class="text-gray-600 text-sm mb-6">Add multiple laptop configurations to predict prices in bulk.</p>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="addLaptopToBatch()" class="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                            Add Laptop
+                        </button>
+                        <button onclick="predictBatch()" class="px-5 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
+                            Predict All
+                        </button>
+                        <button onclick="clearBatch()" class="px-5 py-2.5 bg-gray-600 text-white rounded-lg text-sm font-medium hover:bg-gray-700 transition">
+                            Clear All
+                        </button>
+                    </div>
+                </div>
+
+                <div id="batch-list" class="space-y-4 mb-6">
+                    <!-- Batch items will be added here -->
+                </div>
+
+                <div id="batch-results" class="hidden mt-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Results</h3>
+                    <div id="batch-results-content" class="space-y-4">
+                        <!-- Results will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-6 text-gray-500 text-sm">
+            <p>Powered by XGBoost Machine Learning • Built with Flask & Tailwind CSS</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        let modelInfo = null;
+        let batchCounter = 0;
+
+        // Initialize
+        async function init() {
+            try {
+                const response = await fetch(`${API_URL}/model-info`);
+                modelInfo = await response.json();
+                
+                // Update model metrics
+                document.getElementById('model-r2').textContent = 
+                    (modelInfo.metrics.test_r2 * 100).toFixed(1) + '%';
+                document.getElementById('model-mae').textContent = 
+                    '₹' + modelInfo.metrics.test_mae.toFixed(0);
+                
+                // Populate dropdowns
+                populateDropdowns();
+            } catch (error) {
+                console.error('Error loading model info:', error);
+                showNotification('Failed to connect to the server. Please ensure Flask is running.', 'error');
+            }
+        }
+
+        function populateDropdowns() {
+            const categoricalInfo = modelInfo.categorical_info;
+            
+            // Populate each dropdown
+            for (const [field, values] of Object.entries(categoricalInfo)) {
+                const select = document.getElementById(field);
+                if (select) {
+                    values.forEach(value => {
+                        const option = document.createElement('option');
+                        option.value = value;
+                        option.textContent = value;
+                        select.appendChild(option);
+                    });
+                }
+            }
+        }
+
+        function showNotification(message, type) {
+            alert(message);
+        }
+
+        // Handle form submission
+        document.getElementById('prediction-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btnText = document.getElementById('btn-text');
+            const btnLoader = document.getElementById('btn-loader');
+            
+            btnText.classList.add('hidden');
+            btnLoader.classList.remove('hidden');
+            
+            // Collect form data
+            const formData = {
+                brand: document.getElementById('brand').value,
+                processor_brand: document.getElementById('processor_brand').value,
+                processor_tier: document.getElementById('processor_tier').value,
+                num_cores: parseFloat(document.getElementById('num_cores').value),
+                num_threads: parseFloat(document.getElementById('num_threads').value),
+                ram_memory: parseFloat(document.getElementById('ram_memory').value),
+                primary_storage_type: document.getElementById('primary_storage_type').value,
+                primary_storage_capacity: parseFloat(document.getElementById('primary_storage_capacity').value),
+                secondary_storage_type: document.getElementById('secondary_storage_type').value,
+                secondary_storage_capacity: parseFloat(document.getElementById('secondary_storage_capacity').value),
+                display_size: parseFloat(document.getElementById('display_size').value),
+                resolution_width: parseFloat(document.getElementById('resolution_width').value),
+                resolution_height: parseFloat(document.getElementById('resolution_height').value),
+                gpu_brand: document.getElementById('gpu_brand').value,
+                gpu_type: document.getElementById('gpu_type').value,
+                OS: document.getElementById('OS').value,
+                is_touch_screen: document.getElementById('is_touch_screen').value,
+                year_of_warranty: parseFloat(document.getElementById('year_of_warranty').value)
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}/predict`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Display results
+                    document.getElementById('predicted-price').textContent = 
+                        result.formatted_prediction;
+                    document.getElementById('price-range').textContent = 
+                        `Price range: ${result.formatted_range}`;
+                    document.getElementById('lower-bound').textContent = 
+                        `₹${result.lower_bound.toFixed(2)}`;
+                    document.getElementById('expected-price').textContent = 
+                        result.formatted_prediction;
+                    document.getElementById('upper-bound').textContent = 
+                        `₹${result.upper_bound.toFixed(2)}`;
+                    
+                    document.getElementById('result-card').classList.remove('hidden');
+                    
+                    // Scroll to result
+                    setTimeout(() => {
+                        document.getElementById('result-card').scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'nearest' 
+                        });
+                    }, 100);
+                } else {
+                    showNotification('Error: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Failed to get prediction. Please check the console for details.', 'error');
+            } finally {
+                btnText.classList.remove('hidden');
+                btnLoader.classList.add('hidden');
+            }
+        });
+
+        // Tab switching
+        function showTab(tab) {
+            const tabs = ['predict', 'batch'];
+            tabs.forEach(t => {
+                const content = document.getElementById(`tab-content-${t}`);
+                const button = document.getElementById(`tab-${t}`);
+                
+                if (t === tab) {
+                    content.classList.remove('hidden');
+                    button.classList.add('active');
+                } else {
+                    content.classList.add('hidden');
+                    button.classList.remove('active');
+                }
+            });
+        }
+
+        // Batch prediction functions
+        function addLaptopToBatch() {
+            batchCounter++;
+            const batchList = document.getElementById('batch-list');
+            
+            const laptopCard = document.createElement('div');
+            laptopCard.className = 'card p-5 border-l-4 border-blue-500';
+            laptopCard.id = `batch-item-${batchCounter}`;
+            laptopCard.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="font-semibold text-gray-800">Laptop Configuration #${batchCounter}</h4>
+                    <button onclick="removeBatchItem(${batchCounter})" class="text-red-600 hover:text-red-800 font-semibold text-sm">Remove</button>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <input type="text" placeholder="Brand" class="batch-brand input-field">
+                    <input type="number" placeholder="RAM (GB)" class="batch-ram input-field" value="8">
+                    <input type="number" placeholder="Cores" class="batch-cores input-field" value="4">
+                </div>
+            `;
+            
+            batchList.appendChild(laptopCard);
+        }
+
+        function removeBatchItem(id) {
+            const item = document.getElementById(`batch-item-${id}`);
+            if (item) item.remove();
+        }
+
+        function clearBatch() {
+            document.getElementById('batch-list').innerHTML = '';
+            document.getElementById('batch-results').classList.add('hidden');
+            batchCounter = 0;
+        }
+
+        async function predictBatch() {
+            const batchItems = document.querySelectorAll('[id^="batch-item-"]');
+            
+            if (batchItems.length === 0) {
+                showNotification('Please add at least one laptop to the batch.', 'warning');
+                return;
+            }
+            
+            showNotification('Batch prediction feature is currently under development.', 'info');
+        }
+
+        // Initialize on page load
+        init();
+    </script>
+</body>
+</html>

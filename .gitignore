@@ -1,0 +1,44 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ===== Virtual environments =====
+venv/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# ===== Logs / Temp =====
+*.log
+*.tmp
+*.bak
+
+# ===== Data and Models =====
+*.csv
+*.pkl
+*.joblib
+*.h5
+*.xlsx
+*.json
+
+# ===== Images (optional, if generated dynamically) =====
+*.png
+
+# ===== System / IDE =====
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# ===== Flask instance =====
+instance/
+*.db
+*.sqlite3
+
+# ===== Executables =====
+*.exe
+*.zip
+trash/
