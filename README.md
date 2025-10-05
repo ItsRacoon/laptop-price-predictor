@@ -140,8 +140,8 @@ Make sure your `requirements.txt` and `Procfile` are correctly configured.
 
 **Vishesh Kumar**  
 Student | AI & ML Enthusiast  
-📧 [your-email@example.com]  
-🌐 [LinkedIn Profile](https://linkedin.com/in/yourprofile)  
+📧 [evishesh7.com]  
+🌐 [LinkedIn Profile](https://www.linkedin.com/in/vishesh-kumar-9b37382ba)  
 
 ---
 
