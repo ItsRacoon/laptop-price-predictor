@@ -20,9 +20,13 @@ try:
     numeric_info = model_package['numeric_info']
     metrics = model_package['metrics']
     print("✓ Model loaded successfully!")
-except Exception as e:
-    print(f"Error loading model: {e}")
+except FileNotFoundError:
+    print("❌ Model file not found! Predictions will not work until you add the .pkl file.")
     model = None
+except Exception as e:
+    print(f"❌ Error loading model: {e}")
+    model = None
+
 
 @app.route('/')
 def home():
