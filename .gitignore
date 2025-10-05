@@ -24,7 +24,7 @@ venv.bak/
 *.json
 
 # ===== Images (optional, if generated dynamically) =====
-*.png
+
 
 # ===== System / IDE =====
 .DS_Store
