@@ -17,7 +17,6 @@ venv.bak/
 
 # ===== Data and Models =====
 *.csv
-*.pkl
 *.joblib
 *.h5
 *.xlsx
